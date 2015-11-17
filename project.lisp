@@ -117,7 +117,7 @@ players = [
 
   ; If the player's hand is empty, add the card and its value
   (if (null player)
-    (setq players (append players (list (list playerName (cons card value)))))
+    (setq players (append players (list (list playerName (cons card 1))))) ; 1 -> value
 
     ; Add the card and its value or Update the card's value
     (progn
@@ -128,12 +128,12 @@ players = [
       ; If the card is in their possible hand, update the value
       (if (not (null cardFreq))
         ; Updates the players probability of having that card
-        (setf (cdr cardFreq) value) ; (+ (cdr cardFreq) value))
+        (setf (cdr cardFreq) (+ (cdr cardFreq) 1) ; (+ (cdr cardFreq) value)) -> value
 
         ; Add the card to their possible hand
         (progn
           (setq players (remove player players))
-          (setq player (append player (list (cons card value))))
+          (setq player (append player (list (cons card 1)))) ; 1 -> value
           (setq players (append players (list player)))
         )
       )
@@ -155,9 +155,10 @@ players = [
 
 
 
+; Probably need the number of times the player said they are that character and
+; the probability that they are that player
 
-
-
+; Could add memory for the cards in the deck
 
 
 
