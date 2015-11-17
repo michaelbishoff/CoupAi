@@ -42,6 +42,7 @@
 ;; REQUIRED FUNCTIONS
 
 (defun perform-move (player game)
+	(format t "~%&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&~%~a~%~%" players)
 	; Play as the duke on the first round
 	(if (= (game-rounds game) 1)
 		'(coup::Tax)
@@ -70,21 +71,30 @@
 (defun challenge-card (card player game source &optional target))
 
 (defun event (e game arguments)
+	(format t "~%Event: ~a~%" arguments)
 	(cond
 		((string= e "MOVE") (case (car arguments)
-							('Income "Player (cadr arguments) is using income")
-							('ForeignAid "Player (cadr arguments) is using foreign aid")
-							('Coup "Player (cadr arguments) is couping (caddr arguments)!")
-							('Tax "Player (cadr arguments) is using tax")
-							('Assassinate "Player (cadr arguments) is assassinating (caddr arguments)")
-							('Exchange "Player (cadr arguments) is using exchange")
-							('Steal "Player (cadr arguments) is stealing from (caddr arguments)!")))
+							('coup::Income "Player (cadr arguments) is using income")
+							('coup::ForeignAid "Player (cadr arguments) is using foreign aid")
+							('coup::Coup "Player (cadr arguments) is couping (caddr arguments)!")
+							('coup::Tax "Player (cadr arguments) is using tax"
+								(updateCardProbability (cadr arguments) 'coup::Duke 1))
+							('coup::Assassinate "Player (cadr arguments) is assassinating (caddr arguments)"
+								(updateCardProbability (cadr arguments) 'coup::Assassin 1))
+							('coup::Exchange "Player (cadr arguments) is using exchange"
+								(updateCardProbability (cadr arguments) 'coup::Ambassador 1))
+							('coup::Steal "Player (cadr arguments) is stealing from (caddr arguments)!"
+								(updateCardProbability (cadr arguments) 'coup::Captain 1))))
 		((string= e "SHUFFLE") "Deck is shuffled")
 		((string= e "REVEAL") "(car arguments) has shown they have (cadr arguments)")
 		((string= e "ELIMINATED") "(car arguments) is totally out!")
-		((string= e "CHALLENGE-LOST") "(car arguments) lost that challenge against (cadr arguments) having a (caddr arguments)")
-		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)")
-		((string= e "BLOCK") "(car arguments) blocked (cadr arguments) (caddr arguments) using their (cadddr arguments)")))
+		((string= e "CHALLENGE-LOST") "(car arguments) lost that challenge against (cadr arguments) having a (caddr arguments)"
+			(updateCardProbability (cadr arguments) (caddr arguments) 100))
+		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)"
+			(updateCardProbability (cadr arguments) (caddr arguments) -100))
+			; TODO: Change this to removing the card from the possible card list for that player
+		((string= e "BLOCK") "(car arguments) blocked (cadr arguments) (caddr arguments) using their (cadddr arguments)"
+			(updateCardProbability (car arguments) (cadddr arguments) 1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -93,16 +103,16 @@
 ; Keeps track of the players, what cards they have played,
 ; and the probability that they actually have that card.
 ; The data structure format is as follows:
-#|
-'(
-	(p1 ( (Duke . 0.5) (Contessa . 0.4) ) )
-	(p2 ( (Captain . 0.17) (Ambassador . 0.5) ) )
-)
-players = [
-	p1: [ (Duke, 0.5), (Contessa, 0.4)],
-	p2: [ (Captain, 0.17), (Ambassador, 0.5)]
-]
-|#
+;#|
+;'(
+;	(p1 ( (Duke . 0.5) (Contessa . 0.4) ) )
+;	(p2 ( (Captain . 0.17) (Ambassador . 0.5) ) )
+;)
+;players = [
+;	p1: [ (Duke, 0.5), (Contessa, 0.4)],
+;	p2: [ (Captain, 0.17), (Ambassador, 0.5)]
+;]
+;|#
 (setq players nil)
 
 
@@ -111,7 +121,7 @@ players = [
 ; If the card is not in the hand, then the card and value are added.
 ; If the card is already in the hand, then the current value is replaced.
 (defun updateCardProbability(playerName card value)
-
+  (format t "*************** Updating ~a with card ~a ***************~%~%" playerName card)
   ; Get the player's possible cards & probabilities
   (setq player (assoc playerName players))
 
@@ -128,7 +138,7 @@ players = [
       ; If the card is in their possible hand, update the value
       (if (not (null cardFreq))
         ; Updates the players probability of having that card
-        (setf (cdr cardFreq) (+ (cdr cardFreq) 1) ; (+ (cdr cardFreq) value)) -> value
+        (setf (cdr cardFreq) (+ (cdr cardFreq) value)) ; (+ (cdr cardFreq) value)) -> value
 
         ; Add the card to their possible hand
         (progn

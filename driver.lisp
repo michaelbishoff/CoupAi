@@ -6,4 +6,4 @@
 (in-package :coup)
 
 ;(play '(p3 p3 p3 p3))
-(play '(pro_ject p1 p1))
+(play '(pro_ject p3 p3))
