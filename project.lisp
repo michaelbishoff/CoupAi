@@ -86,3 +86,80 @@
 		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)")
 		((string= e "BLOCK") "(car arguments) blocked (cadr arguments) (caddr arguments) using their (cadddr arguments)")))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; MEMORY FUNCTIONS
+
+; Keeps track of the players, what cards they have played,
+; and the probability that they actually have that card.
+; The data structure format is as follows:
+#|
+'(
+	(p1 ( (Duke . 0.5) (Contessa . 0.4) ) )
+	(p2 ( (Captain . 0.17) (Ambassador . 0.5) ) )
+)
+players = [
+	p1: [ (Duke, 0.5), (Contessa, 0.4)],
+	p2: [ (Captain, 0.17), (Ambassador, 0.5)]
+]
+|#
+(setq players nil)
+
+
+; Updates the card's probability of occuring with the new value.
+; If the hand is empty, then the player, card, and value are added.
+; If the card is not in the hand, then the card and value are added.
+; If the card is already in the hand, then the current value is replaced.
+(defun updateCardProbability(playerName card value)
+
+  ; Get the player's possible cards & probabilities
+  (setq player (assoc playerName players))
+
+  ; If the player's hand is empty, add the card and its value
+  (if (null player)
+    (setq players (append players (list (list playerName (cons card value)))))
+
+    ; Add the card and its value or Update the card's value
+    (progn
+      ; Gets the card and probability of the card they just played (Duke . 0.4)
+      (setq cardFreq (assoc card (cdr player)))
+
+      ; If the card is not in their possible hand, add it.
+      ; If the card is in their possible hand, update the value
+      (if (not (null cardFreq))
+        ; Updates the players probability of having that card
+        (setf (cdr cardFreq) value) ; (+ (cdr cardFreq) value))
+
+        ; Add the card to their possible hand
+        (progn
+          (setq players (remove player players))
+          (setq player (append player (list (cons card value))))
+          (setq players (append players (list player)))
+        )
+      )
+    )
+  )
+
+  ; Sorts the cards for that player by their occurence
+  (sort (cdr player) #'sortCardsByMaxOccurence)
+)
+
+; Sorts the list of cards by their occurence. For example:
+; Input: '((Duke . 10) (Assassin . 5) (Contessa . 15))
+; Output: '((Contessa . 15) (Duke . 10) (Assassin . 5))
+(defun sortCardsByMaxOccurence(a b)
+  (> (cdr a) (cdr b))
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
