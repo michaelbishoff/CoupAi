@@ -28,7 +28,7 @@
 ;;
 
 (import '(coup::Moves
-				/	coup::Characters
+					coup::Characters
 					coup::CardsPerCharacter coup::CardsPerPlayer
 					coup::game-players coup::game-rounds
 					coup::player-name coup::player-hand coup::player-faceup
@@ -384,7 +384,7 @@
 	  		(init (player-hand player))
     	)
     )
-    (print players)
+;    (print players)
 
     (setq policy (nth 0 (policy_iteration)))   
 ;    (list (gethash (current_state (player-coins player)) (nth 0 (policy_iteration))))
@@ -419,12 +419,86 @@
 (defun select-exchange (player game)
 	'((1 . 1) (2 . 2)))
 
-(defun block-move (move player game source &optional target))
+(defun block-move (move player game source &optional target)
+	(setq playerHandCount (- 2 (list-length (player-faceup player))))
+;	(format t "$$$$$$$$$$$ player: ~a has ~a cards. source: ~a $$$$$$$$$$$$$$$" (player-name player) playerHandCount (player-name source))
 
-(defun challenge-card (card player game source &optional target))
+	(if (and (eq playerHandCount 1)  (eq move 'coup::Assassinate))
+		t
+		(if (and (eq move 'coup::ForeignAid) (not (null (find 'coup::Duke (player-hand player)))))
+			t
+			(if (and (eq move 'coup::Steal) (or (not (null (find 'coup::Captain (player-hand player)))) (not (null (find 'coup::Ambassador (player-hand player))))))
+				t
+			)
+		)
+	)
+)
+
+
+; Challenges a player if their two most likely cards aren't the character
+; they are claiming to be
+; If the player claims to be a card that we know they lost, then challenge
+; (it's not likely that they have double)
+; TODO: Set the probability of them having the card to
+; (given lost the card, p(card))
+; If the player has 1 card left and they claim to be something other then
+; their most likely card, challenge
+(defun challenge-card (card player game source &optional target)
+	; source blocks the move
+	; player is the player that is to be challenged
+;	(format t "%%%%%%%%%%%%%%%%%%%%%%% Challenge ~a ~a source: ~a %%%%%%%%%%%%%%%%~%" (player-name player) card (player-name source))
+
+	; Check if the player's top two cards are what they are claiming to be.
+	; If the top two are not the card they claim to be, call them out.
+	; If the top two cards are negative, they don't have the card.
+
+	(setq playerHand (cdr (assoc source players)))
+;	(format t "~a probably has: ~a~%" source playerHand)
+
+	(setq mostLikelyCard (nth 0 playerHand))
+	(setq secondMostLikelyCard (nth 1 playerHand))
+
+	; Gets the card and probability of that card from their hand
+	(setq probabilityOfClaimedCard (assoc card playerHand))
+
+	; If the card they are claiming to be is negative, then they don't have the card
+	(if (and (not (null probabilityOfClaimedCard)) (< (cdr probabilityOfClaimedCard) 0))
+		; TODO: from comment
+		t
+
+		; They have a most likely card
+		(if (not (null mostLikelyCard))
+
+			; They have some cards that are possible
+			; and the most likely equals the card they are claiming to be
+			(if (and (> (cdr mostLikelyCard) 0) (eq (car mostLikelyCard) card))
+				nil
+
+				; If they have two cards that are possible
+				(if (not (null secondMostLikelyCard))
+
+					; If the second most likely card equals the card they are claiming to be
+					(if (and (> (cdr secondMostLikelyCard) 0) (eq (car secondMostLikelyCard) card))
+						nil
+
+						; The top two cards are not the card they are claiming to be, so call them out
+						t
+					)
+
+					; If they have one card left challenge because they have a
+					; different card that is likely to be in their hand
+					(if (eq (- 2 (list-length (player-faceup player))) 1)
+						t
+					)
+				)
+			)
+		)
+	)
+)
 
 (defun event (e game arguments)
-	(format t "~%Event: ~a~%" arguments)
+;	(format t "~%Event: ~a~%" arguments)
+	; TODO: Increase probability of dying if someone gets 7 coins
 	(cond
 		((string= e "MOVE") (case (car arguments)
 							('coup::Income "Player (cadr arguments) is using income")
@@ -475,7 +549,7 @@
 ; If the card is not in the hand, then the card and value are added.
 ; If the card is already in the hand, then the current value is replaced.
 (defun updateCardProbability(playerName card value)
-  (format t "*************** Updating ~a with card ~a ***************~%~%" playerName card)
+;  (format t "************** Updating ~a with card ~a . ~a ********~%~%" playerName card value)
   ; Get the player's possible cards & probabilities
   (setq player (assoc playerName players))
 
@@ -516,6 +590,7 @@
 )
 
 ;;;;;;;;NEEDS TO BE FIXED;;;;;;;;;;;;;;;;;;;;;
+#|
 (defun update_prob (probs) 
 	(progn
 		; (if (or (eq (nth 0 players) coup::Assassin)(eq (nth 1 players) coup::Assassin))
@@ -543,7 +618,7 @@
 				(setf prob_steal_no 0.9)
 			))
 	)))
-
+|#
 ; Probably need the number of times the player said they are that character and
 ; the probability that they are that player
 
