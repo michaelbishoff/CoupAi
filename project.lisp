@@ -284,8 +284,9 @@
 ;; REQUIRED FUNCTIONS
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun init (cards)
+(defun init (cards game)
 	(set_initial cards)
+	(init-opponents game)
 )
 
 (defun policy_iteration ()
@@ -381,16 +382,25 @@
   (progn
   	(if (= (game-rounds game) 1)
   		(progn
-	  		(init (player-hand player))
+	  		(init (player-hand player) game)
     	)
     )
+    (format t "%%%%%%%%%%% Strongest Player is: ~a~%" (player-name (getStrongestPlayer game)))
 ;    (print players)
 ;	(if (eq 'coup::Ambassador (find 'coup::Ambassador (player-hand player)))
 ;		(return-from perform-move '(coup::Exchange))
 ;	)
     (setq policy (nth 0 (policy_iteration)))   
 ;    (list (gethash (current_state (player-coins player)) (nth 0 (policy_iteration))))
-    (list (gethash (current_state (player-coins player)) policy))
+	(setq move (gethash (current_state (player-coins player)) policy))
+
+	(if (eq move 'coup::Coup)
+		(list move (getStrongestPlayer game))
+		(if (eq move 'coup::Steal)
+			(list move)
+			(list move)
+		)
+	)
   )
 )
 
@@ -437,11 +447,11 @@
 	(format t "$$$$$$$$$$$ player: ~a has ~a cards. source: ~a $$$$$$$$$$$$$$$" (player-name player) (player-handcount player) (player-name source))
 
 	(if (and (eq (player-handcount player) 1)  (eq move 'coup::Assassinate))
-		t
+		'coup::Contessa
 		(if (and (eq move 'coup::ForeignAid) (not (null (find 'coup::Duke (player-hand player)))))
-			t
+			'coup::Duke
 			(if (and (eq move 'coup::Steal) (or (not (null (find 'coup::Captain (player-hand player)))) (not (null (find 'coup::Ambassador (player-hand player))))))
-				t
+				'coup::Captain
 			)
 		)
 	)
@@ -527,7 +537,8 @@
 								(updateCardProbability (cadr arguments) 'coup::Captain 1))))
 		((string= e "SHUFFLE") "Deck is shuffled")
 		((string= e "REVEAL") "(car arguments) has shown they have (cadr arguments)")
-		((string= e "ELIMINATED") "(car arguments) is totally out!")
+		((string= e "ELIMINATED") "(car arguments) is totally out!"
+			(remove (car arguments) opponents))
 		((string= e "CHALLENGE-LOST") "(car arguments) lost that challenge against (cadr arguments) having a (caddr arguments)"
 			(updateCardProbability (cadr arguments) (caddr arguments) 0))
 		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)"
@@ -601,6 +612,71 @@
 (defun sortCardsByMaxOccurence(a b)
   (> (cdr a) (cdr b))
 )
+
+
+(defun player-has-card (player card)
+	(setq player-prob-cards (assoc (player-name player) players))
+
+	(if (null player-prob-cards)
+		nil
+		
+		(if (eq card 'coup::Contessa)
+		)
+		(if (eq card 'coup::Captain)
+		)
+		(if (eq card 'coup::Ambassador)
+		)
+		(if (eq card 'coup::Assassin)
+		)
+		(if (eq card 'coup::Duke)
+		)
+	)
+)
+
+
+
+
+; This is set in (defun init())
+(setq opponents nil)
+
+(defun init-opponents (game)
+	; Gets the list of players in the game and removes
+	; PRO_JECT from this list
+	(setq opponents (game-players game))
+	(loop for player in (game-players game) do 
+		(progn 
+			(if (string-equal (player-name player) 'PRO_JECT)
+				(setq opponents (remove player opponents))
+			)
+		)
+	)
+)
+
+(defun getStrongestPlayer (game)
+	(setq strongestPlayer nil)
+	(setq strongestPlayerCoins nil)
+
+	(loop for player in opponents
+		do (progn
+				(setq numCoins (+ (player-coins player) (* (player-handcount player) 7)))
+
+				(if (null strongestPlayer)
+					(progn
+						(setq strongestPlayer player)
+						(setq strongestPlayerCoins numCoins))
+
+					(if (> numCoins strongestPlayerCoins)
+						(progn
+							(setq strongestPlayer player)
+							(setq strongestPlayerCoins numCoins))
+					)
+				)
+			)
+	)
+	strongestPlayer
+)
+
+
 
 ;;;;;;;;NEEDS TO BE FIXED;;;;;;;;;;;;;;;;;;;;;
 #|
