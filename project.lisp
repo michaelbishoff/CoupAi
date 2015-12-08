@@ -386,6 +386,14 @@
     	)
     )
     (format t "%%%%%%%%%%% Strongest Player is: ~a~%" (player-name (getStrongestPlayer game)))
+
+    (format t "%%%%%%%%%%% Does ~a have ~a: ~a~%" 
+    	(player-name (getStrongestPlayer game)) 
+    	'coup::Contessa 
+    	;XX This is how you call player-has card
+    	;(player-has-card player card)
+    	(player-has-card (getStrongestPlayer game) 'coup::Contessa))
+
 ;    (print players)
 ;	(if (eq 'coup::Ambassador (find 'coup::Ambassador (player-hand player)))
 ;		(return-from perform-move '(coup::Exchange))
@@ -538,7 +546,7 @@
 		((string= e "SHUFFLE") "Deck is shuffled")
 		((string= e "REVEAL") "(car arguments) has shown they have (cadr arguments)")
 		((string= e "ELIMINATED") "(car arguments) is totally out!"
-			(remove (car arguments) opponents))
+			(setq opponents (remove (car arguments) opponents)))
 		((string= e "CHALLENGE-LOST") "(car arguments) lost that challenge against (cadr arguments) having a (caddr arguments)"
 			(updateCardProbability (cadr arguments) (caddr arguments) 0))
 		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)"
@@ -617,19 +625,41 @@
 (defun player-has-card (player card)
 	(setq player-prob-cards (assoc (player-name player) players))
 
-	(if (null player-prob-cards)
-		nil
-		
-		(if (eq card 'coup::Contessa)
+	; The player has played a character card
+	(if (not (null player-prob-cards))
+		(progn
+			(if (eq card 'coup::Contessa)
+				(progn 
+					; Gets the card and probability of the card they just played (Duke . 0.4)
+					(setq cardFreq (assoc card (cdr player-prob-cards)))
+
+				    ; If the card is not in their possible hand
+				    ; and it has a probability > 0
+				    (if (and (not (null cardFreq)) (> (cdr cardFreq) 0))
+				    	(return-from player-has-card t)
+				    	nil
+			    	)
+		    	)
+
+		    	; In all other cases, check if the card is in their top two most played
+		    	(most-likely-cards player-prob-cards card)
+			)
+;			(if (or (eq card 'coup::Captain) (eq card 'coup::Ambassador) (eq card 'coup::Duke) (eq card 'coup::Assassin))
+;				(most-likely-cards player-prob-cards card)
+;			)
 		)
-		(if (eq card 'coup::Captain)
-		)
-		(if (eq card 'coup::Ambassador)
-		)
-		(if (eq card 'coup::Assassin)
-		)
-		(if (eq card 'coup::Duke)
-		)
+	)
+)
+
+(defun most-likely-cards(player-prob-cards card)
+	; Gets the card and probability of the card they just played (Duke . 0.4)
+	(setq cardFreqs (cdr player-prob-cards))
+
+    ; If the card is not in their possible hand
+    ; and it has a probability > 0
+    (if (and (not (null cardFreqs)) (or (eq (car (first cardFreqs)) card) (eq (car (second cardFreqs)) card)))
+    	(return-from player-has-card t)
+    	nil
 	)
 )
 
