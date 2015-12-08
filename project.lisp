@@ -389,7 +389,7 @@
 
     (format t "%%%%%%%%%%% Does ~a have ~a: ~a~%" 
     	(player-name (getStrongestPlayer game)) 
-    	'coup::Contessa 
+    	'coup::Contessa
     	;XX This is how you call player-has card
     	;(player-has-card player card)
     	(player-has-card (getStrongestPlayer game) 'coup::Contessa))
@@ -405,6 +405,11 @@
 	(if (eq move 'coup::Coup)
 		(list move (getStrongestPlayer game))
 		(if (eq move 'coup::Steal)
+			; for each player:
+;			(if (or (player-has-card player 'coup::Captain) (player-has-card player 'coup::Ambassador))
+				; Don't steal or check other players
+				; Steal
+;			)
 			(list move)
 			(list move)
 		)
