@@ -110,57 +110,57 @@
 				(if (> 1 prob_tax_plus)(setf prob_tax_plus 1))
 				(if (> 0.2 prob_steal_plus)(setf prob_steal_plus 0.2))
 				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.6 prob_aid_plus)(setf prob_aid_plus 0.6))
+				(if (> 0.4 prob_aid_plus)(setf prob_aid_plus 0.4))
 				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
 				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
 				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.4 prob_aid_no)(setf prob_aid_no 0.4))
+				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
 				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
 				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
 			)
 		)
 		(if (eq 'coup::Captain (find 'coup::Captain cards))
 			(progn	
-				(if (< 0.7 prob_tax_dead)(setf prob_tax_dead 0.5))
+				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
 				(if (< 0 prob_steal_dead)(setf prob_steal_dead 0))
 				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
 				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
 				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
 				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.5 prob_tax_plus)(setf prob_tax_plus 0.5))
-				(if (> 0.6 prob_steal_plus)(setf prob_steal_plus 0.6))
+				(if (> 0.4 prob_tax_plus)(setf prob_tax_plus 0.4))
+				(if (> 0.5 prob_steal_plus)(setf prob_steal_plus 0.5))
 				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.6 prob_aid_plus)(setf prob_aid_plus 0.6))
+				(if (> 0.4 prob_aid_plus)(setf prob_aid_plus 0.4))
 				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
 				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
 				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.4 prob_aid_no)(setf prob_aid_no 0.4))
-				(if (> 0.4 prob_steal_no)(setf prob_steal_no 0.4))
+				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
+				(if (> 0.5 prob_steal_no)(setf prob_steal_no 0.5))
 				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))			)
 		)
 		(if (eq 'coup::Contessa (find 'coup::Contessa cards))
 			(progn	
-				(if (< 0.7 prob_tax_dead)(setf prob_tax_dead 0.5))
+				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
 				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
 				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
 				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
 				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
 				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.5 prob_tax_plus)(setf prob_tax_plus 0.5))
+				(if (> 0.4 prob_tax_plus)(setf prob_tax_plus 0.4))
 				(if (> 0.2 prob_steal_plus)(setf prob_steal_plus 0.2))
 				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.6 prob_aid_plus)(setf prob_aid_plus 0.6))
+				(if (> 0.4 prob_aid_plus)(setf prob_aid_plus 0.4))
 				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
 				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
 				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.4 prob_aid_no)(setf prob_aid_no 0.4))
+				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
 				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
 				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
 			)
 		)
 		(if (eq 'coup::Assassin (find 'coup::Assassin cards))
 			(progn	
-				(if (< 0.7 prob_tax_dead)(setf prob_tax_dead 0.5))
+				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
 				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
 				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
 				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
@@ -180,7 +180,7 @@
 		)
 		(if (eq 'coup::Ambassador (find 'coup::Ambassador cards))
 			(progn	
-				(if (< 0.7 prob_tax_dead)(setf prob_tax_dead 0.5))
+				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
 				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
 				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
 				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
@@ -284,11 +284,13 @@
 ;; REQUIRED FUNCTIONS
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;sets the initial probability values for the transition function
 (defun init (cards game)
 	(set_initial cards)
 	(init-opponents game)
 )
 
+;;Policy iteraction finds the best policy to take to get to a state with higher rewards
 (defun policy_iteration ()
 	(progn
 		(setq pi (make-hash-table))
@@ -332,6 +334,8 @@
 	)
 	)
 
+;;Calculates the expected utility of each state, action pair which depends
+;;the probability of the action being successful as well as the reward for each state
 (defun expected_utility (U state action)
 	(progn 
 		(setq sum 0)
@@ -346,6 +350,8 @@
 )
 )
 
+;;Policy evaluation function evaluates the policy. In other words checks the current policy
+;; and determines if a better state can be reached and updates the policy hash-table as a result
 (defun policy_eval (pi U)
 	(progn
 		(setq k 30)
@@ -368,15 +374,26 @@
 				))))
 	U
 	)
+
+;; returs all the actions that are possible. Not implemented
 (defun get_actions(state)
 		(if (numberp (position state states_a))
 			(return-from get_actions actions)
 		(return-from get_actions nil)))
 
+;;identifies current state based on number of coins 
+;;used to determine the best action
 (defun current_state (num_coins) (
 	nth num_coins states_a))
  
+ ;;initlizes policy to nil
 (setq policy nil)
+
+;;perform-move uses policy iteration to create a hash-table of the best policies for each state
+;;based on the current state the move is chosen
+;;if the move is coup, a function is called to determine who to coup
+;;if the move is steal, a function is called to determine who to steal
+;;if the move is assassinate, a function is called to determine who to assassinate
 
 (defun perform-move (player game)
   (progn
@@ -385,6 +402,7 @@
 	  		(init (player-hand player) game)
     	)
     )
+    (update_prob (player-hand player) (player-coins player))
     (format t "%%%%%%%%%%% Strongest Player is: ~a~%" (player-name (getStrongestPlayer game)))
 
     (format t "%%%%%%%%%%% Does ~a have ~a: ~a~%" 
@@ -403,19 +421,30 @@
 	(setq move (gethash (current_state (player-coins player)) policy))
 
 	(if (eq move 'coup::Coup)
-		(list move (getStrongestPlayer game))
-		(if (eq move 'coup::Steal)
+		(return-from perform-move (list move (getStrongestPlayer game))))
+
+	(if (eq move 'coup::Steal)
+			(progn
+				(loop for val in (init-opponents game)
+					do (progn
+						(print (player-has-card val 'coup::Captain))
+;							(if (not (and (player-has-card val 'coup::Captain) (player-has-card val 'coup::Ambassador)))
+;								(list move val))
+						
+					)
+				)
+				
 			; for each player:
 ;			(if (or (player-has-card player 'coup::Captain) (player-has-card player 'coup::Ambassador))
 				; Don't steal or check other players
 				; Steal
 ;			)
-			(list move)
-			(list move)
-		)
+;			(list move)
+;			(list move)
+		))
+	(return-from perform-move (list move))
 	)
-  )
-)
+ )
 
 #|   ( progn (					; Play as the duke on the first round
   (print actions)
@@ -680,11 +709,14 @@
 	(setq opponents (game-players game))
 	(loop for player in (game-players game) do 
 		(progn 
+			;(print (player-name player))
 			(if (string-equal (player-name player) 'PRO_JECT)
-				(setq opponents (remove player opponents))
+				(setf opponents (remove player opponents))
 			)
 		)
 	)
+	(return-from init-opponents opponents)
+
 )
 
 (defun getStrongestPlayer (game)
@@ -714,35 +746,59 @@
 
 
 ;;;;;;;;NEEDS TO BE FIXED;;;;;;;;;;;;;;;;;;;;;
-#|
-(defun update_prob (probs) 
+
+(defun update_prob(cards coins) 
 	(progn
-		; (if (or (eq (nth 0 players) coup::Assassin)(eq (nth 1 players) coup::Assassin))
-		; 	(progn 
-		; 		(setf prob_income_dead 0.5) 
-		; 		(setf prob_aid_dead 0.5)
-		; 		(setf prob_tax_dead 0.5)
-		; 		(setf prob_steal_dead 0.5)
-		; 		(setf prob_assassinate_dead 0.5)
-		; 	))
-		(if (any player has more that 7 coins
-			(progn 
-				(setf prob_income_dead 0.9) 
-				(setf prob_aid_dead 0.9)
-				(setf prob_tax_dead 0.9)
-				(setf prob_steal_dead 0.9)
-				(setf prob_assassinate_dead 0.9)
-			))
-		(if (or (eq (nth 0 players) coup::Duke)(eq (nth 1 players) coup::Duke))
-			(progn 
-				(setf prob_aid_no 0.9)
-			))
-		(if (or (eq (nth 0 players) coup::Captain)(eq (nth 1 players) coup::Captain))
-			(progn 
-				(setf prob_steal_no 0.9)
-			))
-	)))
-|#
+		(if (and (eq 'coup::Assassin (find 'coup::Assassin cards))(> coins 3))
+			(progn	
+				(setf prob_assassinate_dead 0.2)
+				(setf prob_assassinate_kill 0.5)
+				(setf prob_assassinate_no 0.3)		
+			)
+			(if (> coins 3)
+				(progn	
+					(setf prob_assassinate_dead 0.5)
+					(setf prob_assassinate_kill 0.1)
+					(setf prob_assassinate_no 0.9)		
+				)
+				(progn	
+					(setf prob_assassinate_dead 0.5)
+					(setf prob_assassinate_kill 0)
+					(setf prob_assassinate_no 1))
+			)
+		)
+	)
+)
+
+; |#
+; (defun update_prob (cards) 
+; 	(progn
+; 		(if )
+; 		; (if (or (eq (nth 0 players) coup::Assassin)(eq (nth 1 players) coup::Assassin))
+; 		; 	(progn 
+; 		; 		(setf prob_income_dead 0.5) 
+; 		; 		(setf prob_aid_dead 0.5)
+; 		; 		(setf prob_tax_dead 0.5)
+; 		; 		(setf prob_steal_dead 0.5)
+; 		; 		(setf prob_assassinate_dead 0.5)
+; 		; 	))
+; 		(if (any player has more that 7 coins
+; 			(progn 
+; 				(setf prob_income_dead 0.9) 
+; 				(setf prob_aid_dead 0.9)
+; 				(setf prob_tax_dead 0.9)
+; 				(setf prob_steal_dead 0.9)
+; 				(setf prob_assassinate_dead 0.9)
+; 			))
+; 		(if (or (eq (nth 0 players) coup::Duke)(eq (nth 1 players) coup::Duke))
+; 			(progn 
+; 				(setf prob_aid_no 0.9)
+; 			))
+; 		(if (or (eq (nth 0 players) coup::Captain)(eq (nth 1 players) coup::Captain))
+; 			(progn 
+; 				(setf prob_steal_no 0.9)
+; 			))
+; 	)))
 ; Probably need the number of times the player said they are that character and
 ; the probability that they are that player
 
