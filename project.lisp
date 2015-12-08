@@ -208,7 +208,7 @@
 ;(setq actions '(coup::Tax coup::Steal coup::Income coup::ForeignAid coup::Assassinate))
 (setq actions '(coup::Tax coup::Steal coup::Income coup::ForeignAid coup::Coup coup::Assassinate))
 
-;;Transition function - given current state and action computes 
+;;Transition function - given current state and action, computes 
 ;;the probability of various final states.
 ;;Retruns the probability and the final state depending on the cards in hand
 (defun transition (state_init action)
@@ -385,7 +385,9 @@
     	)
     )
 ;    (print players)
-
+;	(if (eq 'coup::Ambassador (find 'coup::Ambassador (player-hand player)))
+;		(return-from perform-move '(coup::Exchange))
+;	)
     (setq policy (nth 0 (policy_iteration)))   
 ;    (list (gethash (current_state (player-coins player)) (nth 0 (policy_iteration))))
     (list (gethash (current_state (player-coins player)) policy))
@@ -417,13 +419,24 @@
 	(+ (random 2) 1))
 
 (defun select-exchange (player game)
-	'((1 . 1) (2 . 2)))
+	(format t "SWAP~%")
+	(format t "Exchange hand: ~s~%" (player-exchange player))
+
+	(if (eq (game-numplayers game) 1)
+		(if (not (null (find 'coup::Captain (player-exchange player))))
+
+		)
+	)
+	
+	; Swap card 1 in the hand with card 1 in the exchange
+	; Swap card 2 in the hand with card 2 in the exchange
+	'((1 . 1) (2 . 2))
+)
 
 (defun block-move (move player game source &optional target)
-	(setq playerHandCount (- 2 (list-length (player-faceup player))))
-;	(format t "$$$$$$$$$$$ player: ~a has ~a cards. source: ~a $$$$$$$$$$$$$$$" (player-name player) playerHandCount (player-name source))
+	(format t "$$$$$$$$$$$ player: ~a has ~a cards. source: ~a $$$$$$$$$$$$$$$" (player-name player) (player-handcount player) (player-name source))
 
-	(if (and (eq playerHandCount 1)  (eq move 'coup::Assassinate))
+	(if (and (eq (player-handcount player) 1)  (eq move 'coup::Assassinate))
 		t
 		(if (and (eq move 'coup::ForeignAid) (not (null (find 'coup::Duke (player-hand player)))))
 			t
@@ -516,9 +529,9 @@
 		((string= e "REVEAL") "(car arguments) has shown they have (cadr arguments)")
 		((string= e "ELIMINATED") "(car arguments) is totally out!")
 		((string= e "CHALLENGE-LOST") "(car arguments) lost that challenge against (cadr arguments) having a (caddr arguments)"
-			(updateCardProbability (cadr arguments) (caddr arguments) 100))
+			(updateCardProbability (cadr arguments) (caddr arguments) 0))
 		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)"
-			(updateCardProbability (cadr arguments) (caddr arguments) -100))
+			(updateCardProbability (cadr arguments) (caddr arguments) 0))
 			; TODO: Change this to removing the card from the possible card list for that player
 		((string= e "BLOCK") "(car arguments) blocked (cadr arguments) (caddr arguments) using their (cadddr arguments)"
 			(updateCardProbability (car arguments) (cadddr arguments) 1))))
