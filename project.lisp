@@ -119,25 +119,6 @@
 				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
 			)
 		)
-		(if (eq 'coup::Captain (find 'coup::Captain cards))
-			(progn	
-				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
-				(if (< 0 prob_steal_dead)(setf prob_steal_dead 0))
-				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
-				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
-				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
-				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.4 prob_tax_plus)(setf prob_tax_plus 0.4))
-				(if (> 0.5 prob_steal_plus)(setf prob_steal_plus 0.5))
-				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.4 prob_aid_plus)(setf prob_aid_plus 0.4))
-				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
-				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
-				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
-				(if (> 0.5 prob_steal_no)(setf prob_steal_no 0.5))
-				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))			)
-		)
 		(if (eq 'coup::Contessa (find 'coup::Contessa cards))
 			(progn	
 				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
@@ -197,6 +178,25 @@
 				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
 				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
 			)
+		)
+		(if (eq 'coup::Captain (find 'coup::Captain cards))
+			(progn	
+				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
+				(if (< 0 prob_steal_dead)(setf prob_steal_dead 0))
+				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
+				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
+				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
+				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
+				(if (> 0.4 prob_tax_plus)(setf prob_tax_plus 0.4))
+				(if (> 0.6 prob_steal_plus)(setf prob_steal_plus 0.6))
+				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
+				(setf prob_aid_plus 0.2)
+				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
+				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
+				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
+				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
+				(if (> 0.5 prob_steal_no)(setf prob_steal_no 0.5))
+				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))			)
 		)
 	)
 )
@@ -424,27 +424,53 @@
 		(return-from perform-move (list move (getStrongestPlayer game))))
 
 	(if (eq move 'coup::Steal)
-			(progn
-				(loop for val in (init-opponents game)
-					do (progn
-						(print (player-has-card val 'coup::Captain))
-;							(if (not (and (player-has-card val 'coup::Captain) (player-has-card val 'coup::Ambassador)))
-;								(list move val))
-						
-					)
+		(progn
+			(loop for player in opponents
+				do (progn
+					(print (player-has-card player 'coup::Captain))
+					; If a player doesn't have the captain or the ambassador, steal from them
+					(if (not (or (player-has-card player 'coup::Captain) (player-has-card player 'coup::Ambassador)))
+						(return-from perform-move (list move player)))
 				)
-				
-			; for each player:
-;			(if (or (player-has-card player 'coup::Captain) (player-has-card player 'coup::Ambassador))
-				; Don't steal or check other players
-				; Steal
-;			)
-;			(list move)
-;			(list move)
-		))
-	(return-from perform-move (list move))
+			)
+			; Do Income instead of stealing because they have a captain or ambassador
+			(return-from perform-move (list 'coup::Income))
+		)
 	)
- )
+
+	(if (eq move 'coup::Assassinate)
+		(progn
+			(loop for player in opponents
+				do (progn
+					(print (player-has-card player 'coup::Captain))
+					; If a player doesn't have the captain or the ambassador, steal from them
+					(if (not (player-has-card player 'coup::Contessa))
+						(return-from perform-move (list move player)))
+				)
+			)
+			; Do Income instead of stealing because they have a captain or ambassador
+			(return-from perform-move (list 'coup::Income))
+		)
+	)
+
+	(if (eq move 'coup::ForeignAid)
+		(progn
+			(loop for player in opponents
+				do (progn
+					(print (player-has-card player 'coup::Duke))
+					; If a player doesn't have the captain or the ambassador, steal from them
+					(if (player-has-card player 'coup::Duke)
+						(return-from perform-move (list 'coup::Income)))
+				)
+			)
+			; Do Income instead of stealing because they have a captain or ambassador
+			(return-from perform-move (list move))
+		)
+	)
+
+	(return-from perform-move (list move))
+  )
+)
 
 #|   ( progn (					; Play as the duke on the first round
   (print actions)
@@ -751,13 +777,13 @@
 	(progn
 		(if (and (eq 'coup::Assassin (find 'coup::Assassin cards))(> coins 3))
 			(progn	
-				(setf prob_assassinate_dead 0.2)
+				(setf prob_assassinate_dead 0)
 				(setf prob_assassinate_kill 0.5)
 				(setf prob_assassinate_no 0.3)		
 			)
 			(if (> coins 3)
 				(progn	
-					(setf prob_assassinate_dead 0.5)
+					(setf prob_assassinate_dead 0.3)
 					(setf prob_assassinate_kill 0.1)
 					(setf prob_assassinate_no 0.9)		
 				)
