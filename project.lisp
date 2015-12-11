@@ -164,6 +164,8 @@
 ;; Returns the probability and the final state depending on the cards in hand
 (defun transition (state_init action)
 	(progn
+		;;if action is tax, then return a list as shown:
+		;;((probability of state_1, state_1), (probability of state_2, state_2) 
 		(if (eq 'coup::Tax action)
 			(return-from transition 
 				(if (< (position state_init states_a :test #'eq) 8) 
@@ -172,6 +174,7 @@
 						(list prob_tax_dead state_dead)))
 					(list (list prob_tax_plus state_init) (list prob_tax_dead state_dead))
 		)))
+		;;does similar thing with tax but with steal
 		(if (eq 'coup::Steal action)	
 			(return-from transition 
 				(if (< (position state_init states_a :test #'eq) 9) 
@@ -183,6 +186,7 @@
 						(list prob_steal_dead state_dead)
 						(list prob_steal_no state_init))
 		)))
+		;;similar with income as with tax and steal
 		(if (eq 'coup::Income action)	
 			(return-from transition 
 				(if (< (position state_init states_a :test #'eq) 10) 
@@ -192,6 +196,7 @@
 					(list (list prob_income_plus state_init)
 						(list prob_income_dead state_dead))
 		)))
+		;;similar with ForeignAid as with tax and steal
 		(if (eq 'coup::ForeignAid action)
 			(return-from transition 
 				(if (< (position state_init states_a :test #'eq) 9) 
@@ -202,7 +207,8 @@
 					(list (list prob_aid_plus state_init)
 						(list prob_aid_dead state_dead)
 						(list prob_aid_no state_init))
-		)))	
+		)))
+		;;similar with assassinate as with tax and steal	
 		(if (eq 'coup::Assassinate action)	
 			(return-from transition 
 				(if (> (position state_init states_a :test #'eq) 2) 
@@ -217,6 +223,7 @@
 		(if (eq 'coup::Exchange action)	
 			()
 		)
+		;;similar with coup as with tax and steal
 		(if (eq 'coup::Coup action)	
 			(return-from transition 
 				(if (> (position state_init states_a :test #'eq) 6) 
@@ -240,20 +247,25 @@
 ;; with higher rewards
 (defun policy_iteration ()
 	(progn
+		;;Initializes policy hashtable
 		(setq pi (make-hash-table))
+		;;Creates an initial action for each state
 		(loop for s in states_a
 			do (progn 
 				(setf (gethash s pi) (nth (random 1) actions))))
-
 		(loop for s in states_d
 			do (progn (
 				setf (gethash s pi) nil)))
 
+		;;Makes a Utility hashtable that maps utilities to each state
 		(setq U (make-hash-table))
-		
+		;;Initializes the utility hashtable
 		(loop for s in states_all
 			do (setf (gethash s U) 0))
-
+		;;Policy Evaluation, loops through every state and 
+		;;if there is another action which leads to a higher utility
+		;;replace the action in PI with the action that yields a higher
+		;;utility
 		 (loop for i from 0 to 15
 		 	do
 		 	(progn  
@@ -299,6 +311,7 @@
 (defun policy_eval (pi U)
 	(progn
 		(setq k 30)
+		;;Loops through all the states 30 times (evaluation converges before)
 		(loop for i from 0 to k
 			do (progn
 				(loop for s in states_all
@@ -306,6 +319,10 @@
 						(setq sum 0)
 						(loop for val in (transition s (gethash s pi))
 							do(progn
+								;;computes the utlity of the state which is the
+								;;probability of each state and the rewards + the future rewards
+								;;the discount value is 0.3 which means that the earlier rewards 
+								;;are worth more than later rewards
 								(setf sum (+ sum (* (car val)(gethash (nth 1 val) U))))))
 						(setf (gethash s U) (+ (slot-value s 'reward) (* 0.3 sum)))) 
 				))
