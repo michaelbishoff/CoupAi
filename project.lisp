@@ -1,13 +1,17 @@
-;+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; project.lisp - default (and rather dumb) Coup player for
-;; CMSC471 project. Will select relatively arbitrary actions.
-;; Coups if 7 coins available, will otherwise select a random action
+;; project.lisp - Coup player for CMSC471 project. Uses Policy
+;; Evaulation to select actions based on probability of success
+;; Coups if 7 coins available, and kills the strongest player
+;; as of our turn.
 ;;
 ;; Adapted from:
 ;; (c) Shawn Squire 2015
 ;; Version 1.0 - Distributed 10/6/2015
 ;;
+;; Gaurav Luthria
+;; Rajan Patel
+;; Michael Bishoff
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -48,7 +52,7 @@
 	(player :initarg :player)
 	(reward :initarg :reward)))
 
-;;Initialization of all states
+;; Initialization of all states
 (setq state_0_a (make-instance 'state :coins 0 :player "a" :reward 0))
 (setq state_1_a (make-instance 'state :coins 1 :player "a" :reward 10))
 (setq state_2_a (make-instance 'state :coins 2 :player "a" :reward 20))
@@ -91,129 +95,75 @@
 (setq prob_coup_dead 1)
 (setq prob_one 1)
 
-
-;;InitialProbability function - given current state and action computes 
-;;the probability of various final states.
-;;Retruns the probability and the final state depending on the cards in hand
-
+;; set_initial - initializes the probabilies of actions succeeding and
+;; failing based on the cards we have
 (defun set_initial (cards)
 	(progn
 		(setq card1_act nil)
+
+		;; Default probabilities
+		(setf prob_tax_dead 0.5)
+		(setf prob_steal_dead 0.5)
+		(setf prob_exchange_dead 0.5)
+		(setf prob_assassinate_dead 0.5)
+		(setf prob_income_dead 0)
+		(setf prob_aid_dead 0)
+		(setf prob_tax_plus 0.5)
+		(setf prob_steal_plus 0.3)
+		(setf prob_income_plus 1)
+		(setf prob_aid_plus 0.5)
+		(setf prob_assassinate_kill 0)
+		(setf prob_assassinate_no 1)
+		(setf prob_exchange_no 0.5)
+		(setf prob_aid_no 0.5)
+		(setf prob_steal_no 0.2)
+		(setf prob_coup_dead 0)
+
+		;; If we have a Duke, increase the probability of a successful tax
 		(if (eq 'coup::Duke (find 'coup::Duke cards))
 			(progn	
 				(if (< 0 prob_tax_dead)(setf prob_tax_dead 0))
-				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
-				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
-				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
-				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
-				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
 				(if (> 1 prob_tax_plus)(setf prob_tax_plus 1))
-				(if (> 0.2 prob_steal_plus)(setf prob_steal_plus 0.2))
-				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.4 prob_aid_plus)(setf prob_aid_plus 0.4))
-				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
-				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
-				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
-				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
-				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
 			)
 		)
-		(if (eq 'coup::Contessa (find 'coup::Contessa cards))
-			(progn	
-				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
-				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
-				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
-				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
-				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
-				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.4 prob_tax_plus)(setf prob_tax_plus 0.4))
-				(if (> 0.2 prob_steal_plus)(setf prob_steal_plus 0.2))
-				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.4 prob_aid_plus)(setf prob_aid_plus 0.4))
-				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
-				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
-				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
-				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
-				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
-			)
-		)
-		(if (eq 'coup::Assassin (find 'coup::Assassin cards))
-			(progn	
-				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
-				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
-				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
-				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
-				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
-				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.5 prob_tax_plus)(setf prob_tax_plus 0.5))
-				(if (> 0.2 prob_steal_plus)(setf prob_steal_plus 0.2))
-				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.6 prob_aid_plus)(setf prob_aid_plus 0.6))
-				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
-				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
-				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.4 prob_aid_no)(setf prob_aid_no 0.4))
-				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
-				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
-			)
-		)
-		(if (eq 'coup::Ambassador (find 'coup::Ambassador cards))
-			(progn	
-				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
-				(if (< 0.5 prob_steal_dead)(setf prob_steal_dead 0.5))
-				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
-				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
-				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
-				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.5 prob_tax_plus)(setf prob_tax_plus 0.5))
-				(if (> 0.2 prob_steal_plus)(setf prob_steal_plus 0.2))
-				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(if (> 0.6 prob_aid_plus)(setf prob_aid_plus 0.6))
-				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
-				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
-				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.4 prob_aid_no)(setf prob_aid_no 0.4))
-				(if (> 0.3 prob_steal_no)(setf prob_steal_no 0.3))
-				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))
-			)
-		)
+		;; If we have a Captain, increase the probability of a successful steal
 		(if (eq 'coup::Captain (find 'coup::Captain cards))
 			(progn	
-				(if (< 0.6 prob_tax_dead)(setf prob_tax_dead 0.6))
 				(if (< 0 prob_steal_dead)(setf prob_steal_dead 0))
-				(if (< 0.5 prob_exchange_dead)(setf prob_exchange_dead 0.5))
-				(if (< 0.5 prob_assassinate_dead)(setf prob_assassinate_dead 0.5))
-				(if (< 0 prob_income_dead)(setf prob_income_dead 0))
-				(if (< 0 prob_aid_dead)(setf prob_aid_dead 0))
-				(if (> 0.4 prob_tax_plus)(setf prob_tax_plus 0.4))
 				(if (> 0.6 prob_steal_plus)(setf prob_steal_plus 0.6))
-				(if (> 1 prob_income_plus)(setf prob_income_plus 1))
-				(setf prob_aid_plus 0.2)
+				(if (> 0.4 prob_steal_no)(setf prob_steal_no 0.4)))
+		)
+		;; If we have an Assassin, increase the probability
+		;; of a successful assinatiion
+		(if (eq 'coup::Assassin (find 'coup::Assassin cards))
+			(progn	
+				(if (< 0 prob_assassinate_dead)(setf prob_assassinate_dead 0))
 				(if (> 0 prob_assassinate_kill)(setf prob_assassinate_kill 0))
 				(if (> 1 prob_assassinate_no)(setf prob_assassinate_no 1))
-				(if (> 0.5 prob_exchange_no)(setf prob_exchange_no 0.5))
-				(if (> 0.6 prob_aid_no)(setf prob_aid_no 0.6))
-				(if (> 0.5 prob_steal_no)(setf prob_steal_no 0.5))
-				(if (< 0 prob_coup_dead)(setf prob_coup_dead 0))			)
+			)
+		)
+		;; Don't exchange if we have the ambassador because it's a
+		;; waste of a turn for us
+		(if (eq 'coup::Ambassador (find 'coup::Ambassador cards))
+			(progn	
+				(if (< 0 prob_exchange_dead)(setf prob_exchange_dead 0))
+				(if (> 0 prob_exchange_no)(setf prob_exchange_no 0))
+			)
 		)
 	)
 )
 
-;;states list used for computational in functions below
+;; states list used for computational in functions below
 (setq states_a (list state_0_a state_1_a state_2_a state_3_a state_4_a state_5_a state_6_a state_7_a state_8_a state_9_a state_10_a))
 (setq states_d (list state_1_d state_2_d state_3_d state_4_d state_5_d state_6_d state_7_d state_dead))
 (setq states_all (append states_a states_d))
-;(setq actions '(coup::Tax coup::Steal coup::Income coup::ForeignAid coup::Assassinate))
 (setq actions '(coup::Tax coup::Steal coup::Income coup::ForeignAid coup::Coup coup::Assassinate))
 
-;;Transition function - given current state and action, computes 
-;;the probability of various final states.
-;;Retruns the probability and the final state depending on the cards in hand
+;; transition - given current state and action, computes the
+;; probability of various final states.
+;; Returns the probability and the final state depending on the cards in hand
 (defun transition (state_init action)
 	(progn
-;		(print (position state_init states_a))
 		(if (eq 'coup::Tax action)
 			(return-from transition 
 				(if (< (position state_init states_a :test #'eq) 8) 
@@ -274,23 +224,20 @@
 						(list (list prob_one (nth (- (position state_init states_a :test #'eq) 7) states_d))))
 					(list 
 						(list prob_coup_dead state_dead))
-		))
+				))
 		)		
 	)	
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; REQUIRED FUNCTIONS
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;sets the initial probability values for the transition function
+;; init - sets the initial probability values for the transition function given
+;; the cards we are dealt. Create memory of each opponent with the gam object.
 (defun init (cards game)
 	(set_initial cards)
 	(init-opponents game)
 )
 
-;;Policy iteraction finds the best policy to take to get to a state with higher rewards
+;; policy_iteraction - finds the best policy to take to get to a state
+;; with higher rewards
 (defun policy_iteration ()
 	(progn
 		(setq pi (make-hash-table))
@@ -314,7 +261,6 @@
 		 		(setq unchanged T)
 		 		(loop for s in states_all
 		 			do (progn
-;		 				(print (slot-value s 'coins))
 		 				(setf updated_act (get_actions s))
 		 				(setq temp_a (gethash s pi))
 		 				(loop for a in updated_act
@@ -332,26 +278,24 @@
 		 	)
 		 (return-from policy_iteration (list pi))
 	)
-	)
+)
 
-;;Calculates the expected utility of each state, action pair which depends
-;;the probability of the action being successful as well as the reward for each state
+;; expected_utility - Calculates the expected utility of each state, action
+;; pair which depends the probability of the action being successful as well
+;; as the reward for each state
 (defun expected_utility (U state action)
 	(progn 
 		(setq sum 0)
-;		(print action)
 		(loop for val in (transition state action)
 			do(progn
-;				(print val)
-;				(print (gethash (nth 1 val) U))
 				(setf sum (+ sum (* (car val)(gethash (nth 1 val) U)))))
 		)
 		(return-from expected_utility sum)
-)
+	)
 )
 
-;;Policy evaluation function evaluates the policy. In other words checks the current policy
-;; and determines if a better state can be reached and updates the policy hash-table as a result
+;; policy_eval - Checks the current policy and determines if a better state can
+;; be reached and updates the policy hash-table as a result
 (defun policy_eval (pi U)
 	(progn
 		(setq k 30)
@@ -359,100 +303,93 @@
 			do (progn
 				(loop for s in states_all
 					do (progn
-;						(print "STATE")
-;						(print (slot-value s 'coins))
-;						(print (gethash s pi))
 						(setq sum 0)
 						(loop for val in (transition s (gethash s pi))
 							do(progn
-;								(print val)
-;								(print (gethash (nth 1 val) U))
 								(setf sum (+ sum (* (car val)(gethash (nth 1 val) U))))))
-;						(print (gethash s U))
-;						(print (slot-value s 'reward))
 						(setf (gethash s U) (+ (slot-value s 'reward) (* 0.3 sum)))) 
-				))))
-	U
+				))
+		)
 	)
+	U
+)
 
-;; returs all the actions that are possible. Not implemented
+;; get_actions - Returns all the actions that are possible.
 (defun get_actions(state)
 		(if (numberp (position state states_a))
 			(return-from get_actions actions)
 		(return-from get_actions nil)))
 
-;;identifies current state based on number of coins 
-;;used to determine the best action
+;; current_state - Identifies current state based on number of coins.
+;; This is used to determine the best action.
 (defun current_state (num_coins) (
 	nth num_coins states_a))
  
- ;;initlizes policy to nil
+;; Initlizes policy to nil
 (setq policy nil)
 
-;;perform-move uses policy iteration to create a hash-table of the best policies for each state
-;;based on the current state the move is chosen
-;;if the move is coup, a function is called to determine who to coup
-;;if the move is steal, a function is called to determine who to steal
-;;if the move is assassinate, a function is called to determine who to assassinate
-
+;; perform-move - Uses policy iteration to create a hash-table of the best
+;; policies for each state based on the current state the move is chosen.
+;; If the move is coup, a function is called to determine who to coup
+;; If the move is steal, a function is called to determine who to steal.
+;; If the move is assassinate, a function is called to
+;; determine who to assassinate.
 (defun perform-move (player game)
   (progn
+  	;; On the first round, init the probabilities based the cards we are dealt
+  	;; and create a memory of the opponents
   	(if (= (game-rounds game) 1)
   		(progn
 	  		(init (player-hand player) game)
     	)
     )
+
+    ;; Updates the probability of Assinating a player based on the number of
+    ;; coins we have and if we're the Assassin
     (update_prob (player-hand player) (player-coins player))
-    (format t "%%%%%%%%%%% Strongest Player is: ~a~%" (player-name (getStrongestPlayer game)))
 
-    (format t "%%%%%%%%%%% Does ~a have ~a: ~a~%" 
-    	(player-name (getStrongestPlayer game)) 
-    	'coup::Contessa
-    	;XX This is how you call player-has card
-    	;(player-has-card player card)
-    	(player-has-card (getStrongestPlayer game) 'coup::Contessa))
+    (setq policy (nth 0 (policy_iteration)))
 
-;    (print players)
-;	(if (eq 'coup::Ambassador (find 'coup::Ambassador (player-hand player)))
-;		(return-from perform-move '(coup::Exchange))
-;	)
-    (setq policy (nth 0 (policy_iteration)))   
-;    (list (gethash (current_state (player-coins player)) (nth 0 (policy_iteration))))
+    ;; Gets the selects the policy based on the current state 
 	(setq move (gethash (current_state (player-coins player)) policy))
 
+	;; If we chose to Coup, coup the strongest player
 	(if (eq move 'coup::Coup)
 		(return-from perform-move (list move (getStrongestPlayer game))))
 
+	;; If we chose to Steal, steal from someone who doesn't
+	;; have a Captain or Ambassador
 	(if (eq move 'coup::Steal)
 		(progn
 			(loop for player in opponents
 				do (progn
-					(print (player-has-card player 'coup::Captain))
-					; If a player doesn't have the captain or the ambassador, steal from them
+					; If a player doesn't have the Captain or the Ambassador, steal from them
 					(if (not (or (player-has-card player 'coup::Captain) (player-has-card player 'coup::Ambassador)))
 						(return-from perform-move (list move player)))
 				)
 			)
-			; Do Income instead of stealing because they have a captain or ambassador
+			; Take Income instead of stealing because they
+			;; have a Captain or Ambassador
 			(return-from perform-move (list 'coup::Income))
 		)
 	)
 
+	;; If we chose to Assassinate, assassinate someone who doesn't have the contessa
 	(if (eq move 'coup::Assassinate)
 		(progn
 			(loop for player in opponents
 				do (progn
-					(print (player-has-card player 'coup::Captain))
 					; If a player doesn't have the captain or the ambassador, steal from them
 					(if (not (player-has-card player 'coup::Contessa))
 						(return-from perform-move (list move player)))
 				)
 			)
-			; Do Income instead of stealing because they have a captain or ambassador
+			; Do Income instead of assassinating because they have a Contessa
 			(return-from perform-move (list 'coup::Income))
 		)
 	)
 
+	;; If we chose to do ForeignAid, take ForeignAid if no one has the Duke.
 	(if (eq move 'coup::ForeignAid)
 		(progn
 			(loop for player in opponents
@@ -472,112 +409,125 @@
   )
 )
 
-#|   ( progn (					; Play as the duke on the first round
-  (print actions)
-  (if (= (game-rounds game) 1)
-      
-		'(coup::Tax)
-
-		; If we get to 7, coup someone
-		(if (< (player-coins player) 7)
-
-			; If we are the duke, play as the duke
-			(if (eq 'coup::Duke (find 'coup::Duke (player-hand player)))
-				'(coup::Tax)
-				'(coup::Income)
-			)
-			'(coup::Coup)
-		)
-	)
-  )
-  ))
- |#
-
+;; reveal-card - Reveals the cards we have in the order:
+;; Ambassador, Contessa, Assassin, Captain, Duke
 (defun reveal-card (player game)
-	(+ (random 2) 1))
+	(setq reveal-order '('coup::Ambassador  'coup::Contessa  'coup::Assassin 'coup::Captain 'coup::Duke))
 
-(defun select-exchange (player game)
-	(format t "SWAP~%")
-	(format t "Exchange hand: ~s~%" (player-exchange player))
+	(loop for card in reveal-order do
+		(progn
+			; If the card is our first card, reveal it
+			(if (eq card (first (player-hand player)))
+				(return-from reveal-card 1)
 
-	(if (eq (game-numplayers game) 1)
-		(if (not (null (find 'coup::Captain (player-exchange player))))
-
+				; If we have a second card and the card is
+				; our second card, reveal it
+				(if (and (eq (player-handcount player) 2) (eq card (second (player-hand player))))
+					(return-from reveal-card 2)
+				)
+			)
 		)
 	)
-	
-	; Swap card 1 in the hand with card 1 in the exchange
-	; Swap card 2 in the hand with card 2 in the exchange
-	'((1 . 1) (2 . 2))
 )
 
-(defun block-move (move player game source &optional target)
-	(format t "$$$$$$$$$$$ player: ~a has ~a cards. source: ~a $$$$$$$$$$$$$$$" (player-name player) (player-handcount player) (player-name source))
+;; select-exchange - If there is only one opponent,
+;; and we drew the Captian, take the Captain
+(defun select-exchange (player game)
+	(setq swap-list nil)
 
+	;; If there's one other player
+	(if (eq (game-numplayers game) 2)
+		;; If the first card in the exchange is a Captain, take it
+		(if (eq (first (player-exchange player)) 'coup::Captain)
+			(setq swap-list (append swap-list '(1.1)))
+		)
+		;; If the second card in the exchange is a Captain, take it
+		(if (eq (second (player-exchange player)) 'coup::Captain)
+			(setq swap-list (append swap-list '(2.2)))
+		)
+	)
+	swap-list
+)
+
+;; block-move - Blocks various moves depending on the situation
+(defun block-move (move player game source &optional target)
+
+	;; If we have one card left, and they are assassinating us,
+	;; claim to be the Contessa
 	(if (and (eq (player-handcount player) 1)  (eq move 'coup::Assassinate))
 		'coup::Contessa
+
+		;; If they try to take ForeignAid and we are the Duke, block it
 		(if (and (eq move 'coup::ForeignAid) (not (null (find 'coup::Duke (player-hand player)))))
 			'coup::Duke
-			(if (and (eq move 'coup::Steal) (or (not (null (find 'coup::Captain (player-hand player)))) (not (null (find 'coup::Ambassador (player-hand player))))))
+
+			;; If someone tries to steal and we have the Captain, block it
+			(if (and (eq move 'coup::Steal) (not (null (find 'coup::Captain (player-hand player)))))
 				'coup::Captain
+
+				;; If someone tries to steal and we have the Ambassador, block it
+				(if (and (eq move 'coup::Steal) (not (null (find 'coup::Ambassador (player-hand player)))))
+					'coup::Ambassador
+
+					;; If we are being assassinated and we have the contessa, block it
+					(if (and (eq move 'coup::Assassinate) (not (null (find 'coup::Contessa (player-hand player)))))
+						'coup::Contessa
+					)
+				)
 			)
 		)
 	)
 )
 
 
-; Challenges a player if their two most likely cards aren't the character
-; they are claiming to be
-; If the player claims to be a card that we know they lost, then challenge
-; (it's not likely that they have double)
-; TODO: Set the probability of them having the card to
-; (given lost the card, p(card))
-; If the player has 1 card left and they claim to be something other then
-; their most likely card, challenge
+;; challenge-card - Challenges a player if their two most likely cards are not
+;; the character they are claiming to be.
+;; If the player claims to be a card that we know they lost, then challenge
+;; (it's not likely that they have double)
+;; If the player has 1 card left and they claim to be something other then
+;; their most likely card, challenge
 (defun challenge-card (card player game source &optional target)
-	; source blocks the move
-	; player is the player that is to be challenged
-;	(format t "%%%%%%%%%%%%%%%%%%%%%%% Challenge ~a ~a source: ~a %%%%%%%%%%%%%%%%~%" (player-name player) card (player-name source))
 
-	; Check if the player's top two cards are what they are claiming to be.
-	; If the top two are not the card they claim to be, call them out.
-	; If the top two cards are negative, they don't have the card.
+	;; Don't challenge if it's not us who's being attacked
+	(if (not (eq target player))
+		(return-from challenge-card nil)
+	)
 
+	;; Get the player's hand probability
 	(setq playerHand (cdr (assoc source players)))
-;	(format t "~a probably has: ~a~%" source playerHand)
 
+	;; Get the first and second likely card
 	(setq mostLikelyCard (nth 0 playerHand))
 	(setq secondMostLikelyCard (nth 1 playerHand))
 
-	; Gets the card and probability of that card from their hand
+	;; Gets the card and probability of that card from their hand
 	(setq probabilityOfClaimedCard (assoc card playerHand))
 
-	; If the card they are claiming to be is negative, then they don't have the card
+	;; If the card they are claiming to be is negative, then they don't have the card
 	(if (and (not (null probabilityOfClaimedCard)) (< (cdr probabilityOfClaimedCard) 0))
-		; TODO: from comment
 		t
 
-		; They have a most likely card
+		;; They have a most likely card
 		(if (not (null mostLikelyCard))
 
-			; They have some cards that are possible
-			; and the most likely equals the card they are claiming to be
+			;; The most likely equals the card they are claiming to be
 			(if (and (> (cdr mostLikelyCard) 0) (eq (car mostLikelyCard) card))
 				nil
 
-				; If they have two cards that are possible
+				;; If they have two cards that are possible
 				(if (not (null secondMostLikelyCard))
 
-					; If the second most likely card equals the card they are claiming to be
+					;; If the second most likely card equals the card they are claiming to be
 					(if (and (> (cdr secondMostLikelyCard) 0) (eq (car secondMostLikelyCard) card))
 						nil
 
-						; The top two cards are not the card they are claiming to be, so call them out
+						;; The top two cards are not the card they are
+						;; claiming to be, so call them out
 						t
 					)
 
-					; If they have one card left challenge because they have a
-					; different card that is likely to be in their hand
+					;; If they have one card left challenge because they have a
+					;; different card that is likely to be in their hand
 					(if (eq (- 2 (list-length (player-faceup player))) 1)
 						t
 					)
@@ -587,31 +537,37 @@
 	)
 )
 
+;; event - handles various events that occur in the game
 (defun event (e game arguments)
-;	(format t "~%Event: ~a~%" arguments)
-	; TODO: Increase probability of dying if someone gets 7 coins
 	(cond
 		((string= e "MOVE") (case (car arguments)
 							('coup::Income "Player (cadr arguments) is using income")
 							('coup::ForeignAid "Player (cadr arguments) is using foreign aid")
 							('coup::Coup "Player (cadr arguments) is couping (caddr arguments)!")
+							;; Increase the probabliity of Duke if they Tax
 							('coup::Tax "Player (cadr arguments) is using tax"
 								(updateCardProbability (cadr arguments) 'coup::Duke 1))
+							;; Increase the probabliity of Assassin if they Assassinate
 							('coup::Assassinate "Player (cadr arguments) is assassinating (caddr arguments)"
 								(updateCardProbability (cadr arguments) 'coup::Assassin 1))
+							;; Increase the probabliity of Ambassador if they exchange
 							('coup::Exchange "Player (cadr arguments) is using exchange"
 								(updateCardProbability (cadr arguments) 'coup::Ambassador 1))
+							;; Increase the probabliity of Captain if they Steal
 							('coup::Steal "Player (cadr arguments) is stealing from (caddr arguments)!"
 								(updateCardProbability (cadr arguments) 'coup::Captain 1))))
 		((string= e "SHUFFLE") "Deck is shuffled")
 		((string= e "REVEAL") "(car arguments) has shown they have (cadr arguments)")
+		;; Remove a player from the list of opponents if they are eliminated
 		((string= e "ELIMINATED") "(car arguments) is totally out!"
 			(setq opponents (remove (car arguments) opponents)))
+		;; Reset the probability of them having the card if they lost the challenge since they lost the card
 		((string= e "CHALLENGE-LOST") "(car arguments) lost that challenge against (cadr arguments) having a (caddr arguments)"
 			(updateCardProbability (cadr arguments) (caddr arguments) 0))
+		;; Reset the probability of them have the card if they won the challenge since they get a new card
 		((string= e "CHALLENGE-WON") "(car arguments) won that challenge against (cadr arguments) having a (caddr arguments)"
 			(updateCardProbability (cadr arguments) (caddr arguments) 0))
-			; TODO: Change this to removing the card from the possible card list for that player
+		;; Increase the probability of them having the card they are claiming to block with
 		((string= e "BLOCK") "(car arguments) blocked (cadr arguments) (caddr arguments) using their (cadddr arguments)"
 			(updateCardProbability (car arguments) (cadddr arguments) 1))))
 
@@ -635,59 +591,61 @@
 ;|#
 (setq players nil)
 
-
-; Updates the card's probability of occuring with the new value.
-; If the hand is empty, then the player, card, and value are added.
-; If the card is not in the hand, then the card and value are added.
-; If the card is already in the hand, then the current value is replaced.
+;; updateCardProbability - Updates the card's probability of occuring by adding
+;; the value to the running count of times they've played that card.
+;; If the hand is empty, then the player, card, and value are added.
+;; If the card is not in the hand, then the card and value are added.
+;; If the card is already in the hand, then the new value is added.
 (defun updateCardProbability(playerName card value)
-;  (format t "************** Updating ~a with card ~a . ~a ********~%~%" playerName card value)
-  ; Get the player's possible cards & probabilities
+  ;; Get the player's possible cards & probabilities
   (setq player (assoc playerName players))
 
-  ; If the player's hand is empty, add the card and its value
+  ;; If the player's hand is empty, add the card and its value
   (if (null player)
     (setq players (append players (list (list playerName (cons card 1))))) ; 1 -> value
 
-    ; Add the card and its value or Update the card's value
+    ;; Add the card and its value or Update the card's value
     (progn
-      ; Gets the card and probability of the card they just played (Duke . 0.4)
+      ;; Gets the card and probability of the card they just played (Duke . 0.4)
       (setq cardFreq (assoc card (cdr player)))
 
-      ; If the card is not in their possible hand, add it.
-      ; If the card is in their possible hand, update the value
+      ;; If the card is not in their possible hand, add it.
+      ;; If the card is in their possible hand, update the value
       (if (not (null cardFreq))
-        ; Updates the players probability of having that card
-        (setf (cdr cardFreq) (+ (cdr cardFreq) value)) ; (+ (cdr cardFreq) value)) -> value
+        ;; Updates the players probability of having that card
+        (setf (cdr cardFreq) (+ (cdr cardFreq) value))
 
-        ; Add the card to their possible hand
+        ;; Add the card to their possible hand
         (progn
           (setq players (remove player players))
-          (setq player (append player (list (cons card 1)))) ; 1 -> value
+          (setq player (append player (list (cons card 1))))
           (setq players (append players (list player)))
         )
       )
     )
   )
 
-  ; Sorts the cards for that player by their occurence
+  ;; Sorts the cards for that player by their occurence
   (sort (cdr player) #'sortCardsByMaxOccurence)
 )
 
-; Sorts the list of cards by their occurence. For example:
-; Input: '((Duke . 10) (Assassin . 5) (Contessa . 15))
-; Output: '((Contessa . 15) (Duke . 10) (Assassin . 5))
+;; sortCardsByMaxOccurence - Sorts the list of cards by their occurence
+;; Input:  '((Duke . 10) (Assassin . 5) (Contessa . 15))
+;; Output: '((Contessa . 15) (Duke . 10) (Assassin . 5))
 (defun sortCardsByMaxOccurence(a b)
   (> (cdr a) (cdr b))
 )
 
-
+;; player-has-card - Returns true if the player is likely to have a card.
 (defun player-has-card (player card)
 	(setq player-prob-cards (assoc (player-name player) players))
 
 	; The player has played a character card
 	(if (not (null player-prob-cards))
 		(progn
+			;; Special case for Contessa
+			;; If they've claimed to be the contessa once, assume they have it
+			;; because the contessa's action is rarely used
 			(if (eq card 'coup::Contessa)
 				(progn 
 					; Gets the card and probability of the card they just played (Duke . 0.4)
@@ -704,13 +662,12 @@
 		    	; In all other cases, check if the card is in their top two most played
 		    	(most-likely-cards player-prob-cards card)
 			)
-;			(if (or (eq card 'coup::Captain) (eq card 'coup::Ambassador) (eq card 'coup::Duke) (eq card 'coup::Assassin))
-;				(most-likely-cards player-prob-cards card)
-;			)
 		)
 	)
 )
 
+;; most-likely-cards - Returns true if the card is the
+;; player's first or second most likely card
 (defun most-likely-cards(player-prob-cards card)
 	; Gets the card and probability of the card they just played (Duke . 0.4)
 	(setq cardFreqs (cdr player-prob-cards))
@@ -726,9 +683,10 @@
 
 
 
-; This is set in (defun init())
+;; The opponents in the game. This is set in (defun init())
 (setq opponents nil)
 
+;; init-opponents - Initilizes the list of opponents in the game
 (defun init-opponents (game)
 	; Gets the list of players in the game and removes
 	; PRO_JECT from this list
@@ -742,9 +700,11 @@
 		)
 	)
 	(return-from init-opponents opponents)
-
 )
 
+;; getStrongestPlayer - Returns the 'strongest player' at the current state in
+;; the game. The strongest player is the player who has the most coins and we
+;; treat each card as 7 coins
 (defun getStrongestPlayer (game)
 	(setq strongestPlayer nil)
 	(setq strongestPlayerCoins nil)
@@ -769,18 +729,19 @@
 	strongestPlayer
 )
 
-
-
-;;;;;;;;NEEDS TO BE FIXED;;;;;;;;;;;;;;;;;;;;;
-
+;; update_prob - Changes the probability of a successful or blocked
+;; assassination, or us getting called out and losing a card if we try to
+;; assassinate based on if we have the assassin and the number of coins we have
 (defun update_prob(cards coins) 
 	(progn
+		;; If we have the assassin and if we hve more than 3 coins
 		(if (and (eq 'coup::Assassin (find 'coup::Assassin cards))(> coins 3))
 			(progn	
 				(setf prob_assassinate_dead 0)
 				(setf prob_assassinate_kill 0.5)
 				(setf prob_assassinate_no 0.3)		
 			)
+			;; If we have more than 3 coins
 			(if (> coins 3)
 				(progn	
 					(setf prob_assassinate_dead 0.3)
@@ -795,38 +756,3 @@
 		)
 	)
 )
-
-; |#
-; (defun update_prob (cards) 
-; 	(progn
-; 		(if )
-; 		; (if (or (eq (nth 0 players) coup::Assassin)(eq (nth 1 players) coup::Assassin))
-; 		; 	(progn 
-; 		; 		(setf prob_income_dead 0.5) 
-; 		; 		(setf prob_aid_dead 0.5)
-; 		; 		(setf prob_tax_dead 0.5)
-; 		; 		(setf prob_steal_dead 0.5)
-; 		; 		(setf prob_assassinate_dead 0.5)
-; 		; 	))
-; 		(if (any player has more that 7 coins
-; 			(progn 
-; 				(setf prob_income_dead 0.9) 
-; 				(setf prob_aid_dead 0.9)
-; 				(setf prob_tax_dead 0.9)
-; 				(setf prob_steal_dead 0.9)
-; 				(setf prob_assassinate_dead 0.9)
-; 			))
-; 		(if (or (eq (nth 0 players) coup::Duke)(eq (nth 1 players) coup::Duke))
-; 			(progn 
-; 				(setf prob_aid_no 0.9)
-; 			))
-; 		(if (or (eq (nth 0 players) coup::Captain)(eq (nth 1 players) coup::Captain))
-; 			(progn 
-; 				(setf prob_steal_no 0.9)
-; 			))
-; 	)))
-; Probably need the number of times the player said they are that character and
-; the probability that they are that player
-
-; Could add memory for the cards in the deck
-
